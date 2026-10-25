@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>آزمونیار کنکور</title>
+<style>
+@font-face{font-family:Vazirmatn;src:url(fonts/Vazirmatn.woff2) format('woff2');font-weight:100 900;font-display:swap}
+:root{--bg:#eef2f6;--card:#fff;--ink:#1f2a44;--mute:#64718a;--line:#d8e0ea;--acc:#0f766e;--on:#fff;--ok:#1e8e5a;--okbg:#e3f5ec;--bad:#c0392b;--badbg:#fbe9e7;--soft:#f4f7fb;--head:#1f2a44}
+:root[data-t=dark]{--bg:#0f1624;--card:#182236;--ink:#e6ecf5;--mute:#93a1b8;--line:#2a3750;--acc:#2dd4bf;--on:#062a27;--ok:#4ade80;--okbg:#12301f;--bad:#f87171;--badbg:#3a1a1a;--soft:#1d2a42;--head:#0b111d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.9 Vazirmatn,Tahoma,sans-serif}
+header{background:var(--head);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:800}
+nav{display:flex;gap:4px;align-items:center}
+nav button{background:transparent;color:#c9d3e6;border:0;padding:6px 10px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer}
+nav button[hidden]{display:none}
+nav button.on{background:#fff;color:#1f2a44;font-weight:600}
+main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 8px;font-weight:800}
+.mute{color:var(--mute);font-size:14px;margin:4px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.row:last-child{border:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:14px;background:var(--soft);color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:3px 14px;cursor:pointer}
+.chip.on{background:var(--acc);color:var(--on);border-color:var(--acc);font-weight:600}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.btn{font:inherit;border-radius:10px;border:0;padding:10px 18px;background:var(--acc);color:var(--on);font-weight:600;cursor:pointer}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.big{display:block;width:100%;text-align:right;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin:8px 0;font:inherit;font-weight:600;cursor:pointer}
+.big:disabled{opacity:.45;cursor:not-allowed}
+.opt{display:block;width:100%;text-align:right;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;font:inherit;cursor:pointer}
+.opt:disabled{cursor:default;color:var(--ink)}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}
+.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.exp{background:var(--soft);border-right:4px solid var(--acc);padding:10px 14px;border-radius:8px;margin-top:10px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;flex:1;min-width:80px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.bar.w i{background:var(--bad)}.bar.s i{background:var(--ok)}
+.prog{height:6px;background:var(--line);border-radius:4px;margin-bottom:14px}
+.prog i{display:block;height:100%;background:var(--acc);border-radius:4px}
+.cols{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:10px}
+.cols div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:12px}
+.cols b{display:block;width:100%;background:var(--acc);border-radius:6px 6px 0 0;min-height:2px}
+.tag{font-size:13px;padding:2px 8px;border-radius:6px}
+.tag.w{background:var(--badbg);color:var(--bad)}.tag.s{background:var(--okbg);color:var(--ok)}
+</style>
+<script src="questions.js"></script>
+</head>
+<body>
+<header><h1>آزمونیار کنکور</h1>
+<nav><button id="bk2" hidden>بازگشت</button><button data-v="fields" class="on">صفحه اول</button><button data-v="report">گزارش</button><button id="th" aria-label="تغییر حالت تیره و روشن">تیره</button></nav></header>
+<main id="app"></main>
+<script>
+// ---------- ابزارها ----------
+const $=s=>document.querySelector(s),fa=n=>Number(n).toLocaleString('fa-IR');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ST=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+
+// ---------- پیکربندی: رشته‌ها و درس‌ها ----------
+// برای اضافه کردن رشته‌ی جدید، درس‌هاش رو به SUB اضافه کن؛ دکمه‌ی رشته خودکار فعال می‌شه.
+const FIELDS=[{id:'ensani',name:'علوم انسانی'},{id:'riazi',name:'ریاضی و فیزیک'},{id:'tajrobi',name:'علوم تجربی'}];
+const GW={10:'دهم',11:'یازدهم',12:'دوازدهم'};
+const SUB={ensani:[['ریاضی و آمار',[10,11,12]],['اقتصاد',[10]],['زبان و ادبیات فارسی',[10,11,12]],['علوم و فنون ادبی',[10,11,12]],['عربی',[10,11,12]],['تاریخ',[10,11,12]],['جغرافیا',[10,11,12]],['جامعه‌شناسی',[10,11,12]],['فلسفه',[11,12]],['منطق',[10]],['روان‌شناسی',[11]]]};
+
+// ---------- داده ----------
+const DM=location.search.includes('demo');
+const DEMO=[];let did=0;
+Object.keys(SUB).forEach(f=>SUB[f].forEach(([s,gs])=>gs.forEach(g=>{for(let c=1;c<=3;c++)for(let j=1;j<=2;j++)DEMO.push({id:'d'+(++did),field:f,subject:s,grade:g,chapter:c,q:`سوال نمونه شماره ${fa(did)}: کدام گزینه درست است؟`,options:['گزینه یک','گزینه دو','گزینه سه','گزینه چهار'],answer:(c+j)%4,explanation:'این فقط یک سوال نمونه برای تست ظاهر و مسیر سایت است.'})})));
+let Q=(window.QUESTIONS||[]);
+if(DM)Q=DEMO;
+Q=Q.filter(q=>q&&Array.isArray(q.options)&&q.options.length===4&&q.answer>=0&&q.answer<4&&q.subject&&q.grade&&q.chapter!=null);
+
+let F=ST('field')||null,B=new Set(),C={},cur=null,range='week',attempts=ST('attempts')||[];
+const CL=c=>c?'فصل '+fa(c):'مرور کلی';
+const bk=(s,g)=>s+'|'+g,bname=k=>{const[s,g]=k.split('|');return s+' '+GW[g]};
+const qs=k=>Q.filter(q=>q.field===F&&q.subject+'|'+q.grade===k);
+
+// ---------- تم ----------
+function theme(t){document.documentElement.dataset.t=t;$('#th').textContent=t==='dark'?'روشن':'تیره';ST('theme',t)}
+theme(ST('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+$('#th').onclick=()=>theme(document.documentElement.dataset.t==='dark'?'light':'dark');
+
+// ---------- مسیریابی ----------
+let curV='fields',prevV='fields';
+function show(v){
+  if(v!==curV){prevV=curV;curV=v}
+  document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',(v==='report')===(b.dataset.v==='report')));
+  $('#bk2').hidden=v==='fields';
+  ({fields,books,chaps,quiz,result,report})[v]();window.scrollTo(0,0);
+}
+const leave=()=>curV!=='quiz'||!cur||!cur.res.length||confirm('آزمون هنوز تموم نشده و نتیجه‌اش ذخیره نمی‌شه. بریم؟');
+document.querySelectorAll('nav button[data-v]').forEach(b=>b.onclick=()=>{if(!leave())return;if(b.dataset.v==='fields')cur=null;show(b.dataset.v)});
+$('#bk2').onclick=()=>{
+  if(!leave())return;
+  const to={books:'fields',chaps:'books',quiz:'chaps',result:'fields',report:prevV==='report'?'fields':prevV}[curV]||'fields';
+  if(curV==='quiz'||curV==='result')cur=null;
+  show(to);
+};
+
+// ---------- ۱. رشته ----------
+function fields(){
+  $('#app').innerHTML=`<div class="card"><h2>رشته‌ات چیه؟</h2><p class="mute">رشته‌ی کنکورت رو انتخاب کن.</p>
+  ${FIELDS.map(f=>`<button class="big" data-f="${f.id}" ${SUB[f.id]?'':'disabled'}>${f.name}${SUB[f.id]?'':' <span class="mute">(به‌زودی)</span>'}</button>`).join('')}</div>`;
+  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{F=b.dataset.f;ST('field',F);B=new Set();C={};show('books')});
+}
+
+// ---------- ۲. درس‌ها ----------
+function books(){
+  if(!F||!SUB[F])return show('fields');
+  $('#app').innerHTML=`<div class="card"><h2>کدوم درس‌ها رو می‌خوای؟</h2>
+  <p class="mute">یک یا چند درس انتخاب کن. پایه‌های کم‌رنگ هنوز سوال ندارن.</p>
+  ${SUB[F].map(([s,gs])=>`<div class="row"><span>${s}</span><span class="chips">${gs.map(g=>{const k=bk(s,g);return `<button class="chip${B.has(k)?' on':''}" data-k="${k}" ${qs(k).length?'':'disabled'}>${GW[g]}</button>`}).join('')}</span></div>`).join('')}
+  <p><button class="btn sec" id="bk">تغییر رشته</button> <button class="btn" id="nx">ادامه</button></p>
+  ${DM?'<p class="mute">⚠ نسخه‌ی آزمایشی: سوال‌ها فقط نمونه‌ان.</p>':Q.length?'':'<p class="mute">بانک سوال هنوز اضافه نشده است. <a href="?demo" style="color:var(--acc)">دیدن نسخه‌ی آزمایشی</a></p>'}</div>`;
+  const upd=()=>$('#nx').disabled=!B.size;upd();
+  document.querySelectorAll('.chip[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;B.has(k)?B.delete(k):B.add(k);b.classList.toggle('on');upd()});
+  $('#bk').onclick=()=>show('fields');$('#nx').onclick=()=>show('chaps');
+}
+
+// ---------- ۳. فصل‌ها ----------
+function chaps(){
+  if(!B.size)return show('books');
+  const ks=[...B];
+  ks.forEach(k=>{if(!C[k])C[k]=new Set()});
+  $('#app').innerHTML=`<div class="card"><h2>تا کدوم فصل‌ها خوندی؟</h2><p class="mute">فصل‌هایی که خوندی رو انتخاب کن. فقط از همین فصل‌ها سوال میاد.</p>
+  ${ks.map(k=>{const cs=[...new Set(qs(k).map(q=>q.chapter))].sort((a,b)=>a-b);
+    return `<div class="row" style="display:block"><b>${bname(k)}</b> <button class="chip" data-all="${k}">همه‌ی فصل‌ها</button>
+    <div class="chips" style="margin-top:6px">${cs.map(c=>`<button class="chip${C[k].has(c)?' on':''}" data-k="${k}" data-c="${c}">${CL(c)}</button>`).join('')}</div></div>`}).join('')}
+  <p><button class="btn sec" id="bk">قبلی</button> <button class="btn" id="go"></button></p></div>`;
+  const total=()=>ks.reduce((n,k)=>n+qs(k).filter(q=>C[k].has(q.chapter)).length,0);
+  const upd=()=>{const n=total();$('#go').textContent=n?`شروع آزمون (${fa(n)} سوال)`:'شروع آزمون';$('#go').disabled=!n};upd();
+  document.querySelectorAll('.chip[data-c]').forEach(b=>b.onclick=()=>{const k=b.dataset.k,c=+b.dataset.c;C[k].has(c)?C[k].delete(c):C[k].add(c);b.classList.toggle('on');upd()});
+  document.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{const k=b.dataset.all,all=[...new Set(qs(k).map(q=>q.chapter))],full=all.every(c=>C[k].has(c));
+    C[k]=new Set(full?[]:all);document.querySelectorAll(`.chip[data-k="${k}"][data-c]`).forEach(x=>x.classList.toggle('on',!full));upd()});
+  $('#bk').onclick=()=>show('books');
+  $('#go').onclick=()=>{
+    const list=ks.flatMap(k=>qs(k).filter(q=>C[k].has(q.chapter)));
+    for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]]}
+    cur={list,i:0,res:[]};show('quiz');
+  };
+}
+
+// ---------- ۴. آزمون (فقط اسم درس نشون داده می‌شه، نه فصل) ----------
+function quiz(){
+  if(!cur)return show('fields');
+  const q=cur.list[cur.i];
+  $('#app').innerHTML=`<div class="prog"><i style="width:${cur.i/cur.list.length*100}%"></i></div>
+  <div class="card"><p class="mute">سوال ${fa(cur.i+1)} از ${fa(cur.list.length)} · ${esc(bname(q.subject+'|'+q.grade))}</p>
+  <h2>${esc(q.q)}</h2><div>${q.options.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>
+  <div id="after"></div><p><button class="btn sec" id="end">پایان آزمون</button></p></div>`;
+  $('#end').onclick=()=>cur.res.length?finish():(cur=null,show('fields'));
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const pick=+b.dataset.i,ok=pick===q.answer;
+    document.querySelectorAll('.opt').forEach((o,i)=>{o.disabled=true;if(i===q.answer)o.classList.add('ok')});
+    if(!ok)b.classList.add('bad');
+    cur.res.push({id:q.id,k:q.subject+'|'+q.grade,ch:q.chapter,ok});
+    const last=cur.i===cur.list.length-1;
+    $('#after').innerHTML=`<div class="exp"><b>${ok?'درست گفتی.':'پاسخ درست گزینه‌ی '+fa(q.answer+1)+' بود.'}</b>${q.explanation?'<br>'+esc(q.explanation):''}</div>
+    <p><button class="btn" id="nx">${last?'دیدن نتیجه':'سوال بعدی'}</button></p>`;
+    $('#nx').onclick=()=>last?finish():(cur.i++,quiz());
+  });
+}
+function finish(){attempts.push({t:Date.now(),res:cur.res});ST('attempts',attempts);show('result')}
+
+// ---------- تحلیل ----------
+function stats(list){
+  const m={};list.forEach(r=>{const k=bname(r.k)+' ← '+CL(r.ch);(m[k]=m[k]||{n:0,c:0});m[k].n++;m[k].c+=r.ok?1:0});
+  return Object.entries(m).map(([k,v])=>({k,n:v.n,p:Math.round(v.c/v.n*100)})).sort((a,b)=>a.p-b.p);
+}
+const rows=s=>s.map(x=>{const c=x.p<50?'w':x.p>=75?'s':'';return `<div class="row"><span style="min-width:150px">${esc(x.k)}</span><div class="bar ${c}"><i style="width:${x.p}%"></i></div><span>${fa(x.p)}٪</span>${c?`<span class="tag ${c}">${c==='w'?'ضعیف':'قوی'}</span>`:''}</div>`}).join('');
+function result(){
+  const r=cur.res,c=r.filter(x=>x.ok).length;
+  $('#app').innerHTML=`<div class="card"><h2>نتیجه: ${fa(c)} از ${fa(r.length)} (${fa(Math.round(c/r.length*100))}٪)</h2>
+  <p class="mute">وضعیت هر مبحث در همین آزمون:</p>${rows(stats(r))}
+  <p><button class="btn" id="ag">آزمون تازه</button> <button class="btn sec" id="rp">گزارش پیشرفت</button></p></div>`;
+  $('#ag').onclick=()=>{cur=null;show('fields')};$('#rp').onclick=()=>{cur=null;show('report')};
+}
+
+// ---------- گزارش هفتگی و ماهانه ----------
+function bucket(t){
+  const d=new Date(t);
+  if(range==='month')return{k:d.getFullYear()*100+d.getMonth(),l:d.toLocaleDateString('fa-IR',{month:'long'})};
+  const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()-(d.getDay()+1)%7);
+  return{k:s.getTime(),l:s.toLocaleDateString('fa-IR',{month:'short',day:'numeric'})};
+}
+function report(){
+  if(!attempts.length){$('#app').innerHTML=`<div class="card"><h2>هنوز گزارشی نداریم</h2><p class="mute">بعد از اولین آزمون، پیشرفتت اینجا نمایش داده می‌شود.</p></div>`;return}
+  const B2={};attempts.forEach(a=>{const b=bucket(a.t);(B2[b.k]=B2[b.k]||{l:b.l,n:0,c:0});a.res.forEach(r=>{B2[b.k].n++;B2[b.k].c+=r.ok?1:0})});
+  const rs=Object.keys(B2).sort((a,b)=>a-b).slice(range==='week'?-8:-6).map(k=>({...B2[k],p:Math.round(B2[k].c/B2[k].n*100)}));
+  const u=range==='week'?'هفته':'ماه';let note='';
+  if(rs.length>1){const d=rs.at(-1).p-rs.at(-2).p;note=`نسبت به ${u} قبل: ${d>0?'+':''}${fa(d)}٪ ${d>0?'پیشرفت':d<0?'افت':'بدون تغییر'}`}
+  $('#app').innerHTML=`<div class="card"><div class="row"><h2>پیشرفت ${range==='week'?'هفتگی':'ماهانه'}</h2><span><button class="btn sec" data-r="week">هفته</button> <button class="btn sec" data-r="month">ماه</button></span></div>
+  <div class="cols">${rs.map(r=>`<div><span>${fa(r.p)}٪</span><b style="height:${r.p}%"></b><span>${esc(r.l)}</span><span class="mute">${fa(r.n)} سوال</span></div>`).join('')}</div><p><b>${note}</b></p></div>
+  <div class="card"><h2>ضعف و قوت کلی</h2>${rows(stats(attempts.flatMap(a=>a.res)))}</div>`;
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{range=b.dataset.r;report()});
+}
+show('fields');
+</script>
+</body>
+</html>
